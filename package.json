@@ -1,0 +1,23 @@
+{
+  "name": "salesforce-code-guide",
+  "version": "1.0.0",
+  "description": "Code guidelines for development on the Salesforce platform",
+  "author": "Georg Wittberger <georg.wittberger@gmail.com>",
+  "homepage": "https://georgwittberger.github.io/salesforce-code-guide/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/georgwittberger/salesforce-code-guide.git"
+  },
+  "bugs": {
+    "url": "https://github.com/georgwittberger/salesforce-code-guide/issues"
+  },
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "vuepress dev",
+    "build": "vuepress build"
+  },
+  "devDependencies": {
+    "vuepress": "^2.0.0-beta.4"
+  }
+}
