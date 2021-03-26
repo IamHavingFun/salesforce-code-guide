@@ -3,7 +3,11 @@
 This document explains some code style guidelines to make JavaScript code more
 readable and easier to understand.
 
-## Prefer modern JS syntax and features
+## Prefer Array methods
+
+Coming soon
+
+## Prefer arrow functions if possible
 
 Coming soon
 
@@ -12,5 +16,9 @@ Coming soon
 Coming soon
 
 ## Prefer explicit radix when parsing numbers
+
+Coming soon
+
+## Prefer async/await for asynchronous code
 
 Coming soon

@@ -11,24 +11,28 @@ quality Apex code.
 ::: danger BAD
 
 ```apex
-class GeneralUtils {
-  List<Account> getAccountsByIds(Set<Id> accountIds) {}
-  List<Contact> getContactsByIds(Set<Id> contactIds) {}
+public class GeneralUtils {
+  public List<Account> getAccountsByIds(Set<Id> accountIds) {}
+  public List<Contact> getContactsByIds(Set<Id> contactIds) {}
 }
 ```
+
+The class takes responsibility for two different functionalities.
 
 :::
 
 ::: tip BETTER
 
 ```apex
-class AccountProvider {
-  List<Account> getAccountsByIds(Set<Id> accountIds) {}
+public class AccountProvider {
+  public List<Account> getAccountsByIds(Set<Id> accountIds) {}
 }
-class ContactProvider {
-  List<Contact> getContactsByIds(Set<Id> contactIds) {}
+public class ContactProvider {
+  public List<Contact> getContactsByIds(Set<Id> contactIds) {}
 }
 ```
+
+There are two separate classes for the different functionalities.
 
 :::
 
@@ -67,8 +71,8 @@ tend to become dumps for unrelated domain logic as well.
 ::: danger BAD
 
 ```apex
-class AccountCleaner {
-  void cleanupDuplicateAccounts(Integer minNumberOfEmployees) {
+public class AccountCleaner {
+  public void cleanupDuplicateAccounts(Integer minNumberOfEmployees) {
     List<Account> accounts;
     if (minNumberOfEmployees > 0) {
       accounts = [
@@ -105,11 +109,11 @@ method parameters to differentiate how the records are queried.
 ::: tip BETTER
 
 ```apex
-class AccountCleaner {
-  List<Account> getAllAccountsLatestFirst() {
+public class AccountCleaner {
+  public List<Account> getAllAccountsLatestFirst() {
     return [SELECT Name FROM Account ORDER BY CreatedDate DESC];
   }
-  List<Account> getAccountsWithMinEmployeesLatestFirst(
+  public List<Account> getAccountsWithMinEmployeesLatestFirst(
     Integer minNumberOfEmployees
   ) {
     return [
@@ -118,7 +122,7 @@ class AccountCleaner {
       ORDER BY CreatedDate DESC
     ];
   }
-  void deleteDuplicateAccounts(List<Account> accounts) {
+  public void deleteDuplicateAccounts(List<Account> accounts) {
     Set<String> visitedAccountNames = new Set<String>();
     List<Account> duplicateAccounts = new List<Account>();
     for (Account account : accounts) {
@@ -132,7 +136,7 @@ class AccountCleaner {
       delete duplicateAccounts;
     }
   }
-  void cleanupOlderDuplicateAccountsOfLargeCompanies() {
+  public void cleanupOlderDuplicateAccountsOfLargeCompanies() {
     List<Account> largeCompanyAccounts =
       getAccountsWithMinEmployeesLatestFirst(500);
     deleteDuplicateAccounts(largeCompanyAccounts);
@@ -173,15 +177,15 @@ An example of a software design pattern to help with decoupling of logic is the
 _strategy pattern_. Applied to the example above it looks as follows.
 
 ```apex
-interface AccountProvider {
+public interface AccountProvider {
   List<Account> getAccounts();
 }
-class LatestAccountsProvider implements AccountProvider {
+public class LatestAccountsProvider implements AccountProvider {
   public List<Account> getAccounts() {
     return [SELECT Name FROM Account ORDER BY CreatedDate DESC];
   }
 }
-class LatestAccountsMinEmployeesProvider implements AccountProvider {
+public class LatestAccountsMinEmployeesProvider implements AccountProvider {
   private final Integer minNumberOfEmployees;
   public LatestAccountsMinEmployeesProvider(Integer minNumberOfEmployees) {
     this.minNumberOfEmployees = minNumberOfEmployees;
@@ -194,12 +198,12 @@ class LatestAccountsMinEmployeesProvider implements AccountProvider {
     ];
   }
 }
-class AccountCleaner {
+public class AccountCleaner {
   private final AccountProvider provider;
   public AccountCleaner(AccountProvider provider) {
     this.provider = provider;
   }
-  void cleanupDuplicateAccounts() {
+  public void cleanupDuplicateAccounts() {
     List<Account> accounts = provider.getAccounts();
     Set<String> visitedAccountNames = new Set<String>();
     List<Account> duplicateAccounts = new List<Account>();
@@ -233,13 +237,13 @@ new AccountCleaner(latestAccountsProvider).cleanupDuplicateAccounts();
 ::: danger BAD
 
 ```apex
-class AccountProvider {
+public class AccountProvider {
   public static List<Account> getAccountsByName(Set<String> names) {
     return [SELECT Name FROM Account WHERE Name IN :names];
   }
 }
-class AccountProcessor {
-  void processAccounts() {
+public class AccountProcessor {
+  public void processAccounts() {
     Set<String> accountNames = new Set<String>{ 'foo', 'bar' };
     List<Account> accounts = AccountProvider.getAccountsByName(accountNames);
     // Do something with accounts
@@ -256,17 +260,17 @@ implicitly tested as well.
 ::: tip BETTER
 
 ```apex
-class AccountProvider {
+public class AccountProvider {
   public List<Account> getAccountsByName(Set<String> names) {
     return [SELECT Name FROM Account WHERE Name IN :names];
   }
 }
-class AccountProcessor {
+public class AccountProcessor {
   private final AccountProvider provider;
   public AccountProcessor(AccountProvider provider) {
     this.provider = provider;
   }
-  void processAccounts() {
+  public void processAccounts() {
     Set<String> accountNames = new Set<String>{ 'foo', 'bar' };
     List<Account> accounts = provider.getAccountsByName(accountNames);
     // Do something with accounts
@@ -302,3 +306,53 @@ scenario. This can save a lot of test setup code in the higher-level unit tests.
 See the
 [FFLib ApexMocks Framework](https://github.com/apex-enterprise-patterns/fflib-apex-mocks)
 for an easy to use mocking library.
+
+## Prefer enforcing sharing settings
+
+> Classes respecting sharing settings contribute to more secure software.
+
+::: danger BAD
+
+```apex
+public without sharing class AccountProvider {
+  public List<Account> getAccounts() {
+    return [SELECT Id, Name FROM Account];
+  }
+}
+```
+
+The class does not enforce sharing settings for the SOQL query. This may become
+a security risk.
+
+:::
+
+::: tip BETTER
+
+```apex
+public with sharing class AccountProvider {
+  public List<Account> getAccounts() {
+    return [SELECT Id, Name FROM Account];
+  }
+}
+```
+
+The class enforces sharing settings which makes it more secure.
+
+:::
+
+The record sharing concept of Salesforce is an important mechanism for secure
+data management. It prevents users from accessing records which they are not
+supposed to access. When implementing code which is eventually executed by
+different users with various permissions it can be tempting to simply declare a
+class `without sharing` to get rid of the annoying problem that the logic does
+not work for some users because they do not have access to the records as
+required by the code. This introduces security risks because every user who is
+allowed to access the Apex class implicitly has access to the data that it
+queries.
+
+It is recommended to enforce sharing settings whenever possible. Even if it is a
+little bit more effort you should rather install proper sharing rules which
+explicitly define which records can be accessed by which user group. For special
+use cases you can even create sharing records manually using Apex code.
+
+Use `without sharing` only as a last resort.
