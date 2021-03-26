@@ -8,5 +8,6 @@ module.exports = {
   themeConfig: {
     navbar: ["/architecture/README.md", "/code-style/README.md"],
     repo: "georgwittberger/salesforce-code-guide",
+    docsBranch: "gh-pages",
   },
 };
