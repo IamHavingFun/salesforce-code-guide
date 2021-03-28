@@ -5,7 +5,7 @@ sidebar: false
 # Code Style Guide
 
 This area contains guidelines to ensure that source code is easy to read and
-understand. This improves developer productivity and helps to avoid errors.
+understand. This improves developer productivity and helps avoid errors.
 
 The guide is subdivided into programming languages.
 

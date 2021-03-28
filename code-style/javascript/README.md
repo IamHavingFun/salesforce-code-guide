@@ -7,7 +7,7 @@ readable and easier to understand.
 
 Coming soon
 
-## Prefer arrow functions if possible
+## Prefer arrow functions
 
 Coming soon
 
